@@ -20,7 +20,6 @@ class MiddlewareHandler {
       if (index < matchedMiddlewares.length) {
         const middleware = matchedMiddlewares[index];
         middleware.handler(req, res, () => executeMiddlewares(index + 1));
-        console.log(index);
       } else {
         next();
       }

@@ -5,11 +5,11 @@ class Router {
 
   get(path, handler) {
     const route = {
-      path: this.parsePath(path),
+      path,
       handler,
       keys: [],
+      regex: null,
     };
-
     route.path = path.replace(/:([^\/]+)/g, (match, key) => {
       route.keys.push(key);
       return "([^\\/]+)";
@@ -17,7 +17,6 @@ class Router {
 
     route.regex = new RegExp(`^${route.path}$`);
 
-    console.log(route.regex);
     this.routes.push(route);
   }
 
@@ -25,7 +24,6 @@ class Router {
     const { pathname } = new URL(req.url, `http://${req.headers.host}`);
     for (const route of this.routes) {
       const match = pathname.match(route.regex);
-      console.log("match", match);
       if (match && req.method.toLowerCase() === "get") {
         const params = this.extractParams(route, match);
         req.params = params;
@@ -37,17 +35,12 @@ class Router {
     res.end("Not Found");
   }
 
-  parsePath(path) {
-    return path.replace(/:([^\/]+)/g, "([^\\/]+)");
-  }
-
   extractParams(route, match) {
     const params = {};
     route.keys.forEach((key, index) => {
       params[key] = match[index + 1];
     });
 
-    console.log(params);
     return params;
   }
 }
