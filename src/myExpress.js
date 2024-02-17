@@ -1,45 +1,24 @@
 const http = require("http");
+const Router = require("./router");
+const MiddlewareHandler = require("./middlewareHandler");
 
 class MyExpress {
   constructor() {
-    this.routes = [];
-    this.middlewares = [];
+    this.router = new Router();
+    this.middlewareHandler = new MiddlewareHandler();
     this.server = http.createServer((req, res) => {
-      const matchedMiddlewares = this.middlewares.filter((mw) =>
-        req.url.startsWith(mw.path)
-      );
-      const route = this.routes.find(
-        (route) =>
-          route.path === req.url && route.method === req.method.toLowerCase()
-      );
-
-      const next = () => {
-        if (matchedMiddlewares.length > 0) {
-          const middleware = matchedMiddlewares.shift();
-          console.log("middleware", middleware);
-          middleware.handler(req, res, next);
-          console.log("middleware handled", matchedMiddlewares.length);
-        } else if (route) {
-          route.handler(req, res);
-        } else {
-          res.writeHead(404);
-          res.end("Not Found");
-        }
-      };
-      next();
+      this.middlewareHandler.handle(req, res, () => {
+        this.router.handle(req, res);
+      });
     });
   }
 
-  use(path, handler) {
-    if (typeof path === "function") {
-      handler = path;
-      path = "/";
-    }
-    this.middlewares.push({ path, handler });
+  use(...args) {
+    this.middlewareHandler.use(...args);
   }
 
   get(path, handler) {
-    this.routes.push({ path, method: "get", handler });
+    this.router.get(path, handler);
   }
 
   listen(port, callback) {
